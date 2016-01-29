@@ -1,0 +1,115 @@
+/*
+ * Matthew Riley
+ ICS3U-1
+ Final Project - Turret Circle Class
+ April 22, 14
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class TurretCircle {
+
+    //The # of turrets in the turret circle
+    private int numTurrets;
+
+    //The locations of the turrets in the turret circle
+    Point[] points;
+
+    //The bounding body of the enemy base
+    Shape bodyZone;
+
+    //The health of the energy base
+    private int health;
+    
+    //The coordinates of the centre of the turret circle
+    private int centreX;
+    private int centreY;
+
+    //Constructor
+    public TurretCircle(int _numTurrets) {
+
+        //Set the number of turrets in the circle
+        numTurrets = _numTurrets;
+
+        //Set up the points array
+        points = new Point[numTurrets];
+
+        //The angle of increment (angle between each turret to ensure they are evenly distributed on the turret circle)
+        int angleIncrement = 360 / numTurrets;
+
+        //Calculate the centre of the turrets
+        centreX = Const.FIELD_WIDTH / 2;
+        centreY = Const.FIELD_HEIGHT / 2;
+
+        //Create the locations of the turrets in the turret circle
+        for (int i = 0; i < numTurrets; i++) {
+
+            //Use polar co-ordinates to determine the coordinates of the turrets
+            double theta = i * angleIncrement;
+
+            //Convert theta to radians
+            theta = Math.toRadians(theta);
+
+            //Convert from polar to cartesian coordinates
+            int posX = (int) (Const.RADIUS * Math.cos(theta)) + centreX;
+            int posY = (int) (Const.RADIUS * Math.sin(theta)) + centreY;
+
+            //Add the point to the array of points
+            Point point = new Point(posX, posY);
+            points[i] = point;
+            //System.out.println("Point X " + i + ": " + posX);
+            //System.out.println("Point Y " + i + ": " + posY);
+        }
+
+        //Create a bounding body zone for the turret circle (centred in the field)
+        bodyZone = new Rectangle(
+                centreX - Const.TURRET_LENGTH / 2,
+                centreY - Const.TURRET_LENGTH / 2,
+                Const.TURRET_LENGTH,
+                Const.TURRET_LENGTH
+        );
+
+        //Set the starting health of enemy base
+        health = Const.TURRET_HEALTH;
+    }
+
+//Accessors
+    public Point[] getPoints() {
+        return points;
+    }
+    
+    public int getCentreX() {
+        return centreX;
+    }
+    
+    public int getCentreY() {
+        return centreY;
+    }
+
+    public Shape getBodyZone() {
+        return bodyZone;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public boolean isAlive() {
+        //Return whether the turret has health left or not
+        return health > 0;
+    }
+
+    //Methods
+    public void damage() {
+        health -= Const.DROP_DAMAGE;
+    }
+}

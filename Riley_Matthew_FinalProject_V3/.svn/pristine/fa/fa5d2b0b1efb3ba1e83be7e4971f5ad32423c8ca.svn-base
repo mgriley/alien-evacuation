@@ -1,0 +1,53 @@
+/*
+ * Matthew Riley
+ICS3U-1
+Final Project - Beam Shot Class
+April 28, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+import java.awt.geom.Line2D;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class BeamShot {
+    
+    private int orgX;
+    private int orgY;
+    private int angle;
+    
+    private Line2D beam;
+    
+    //Constructor
+    public BeamShot(int _orgX, int _orgY, int _angle) {
+        
+        orgX = _orgX;
+        orgY = _orgY;
+        angle = _angle;
+        
+        //Determine the end-points of the line
+        double endX = 100 * Math.cos(angle);
+        double endY = 100 * Math.sin(angle);
+        
+        //Create a line
+        beam = new Line2D.Double(orgX, orgY, endX, endY);
+    }
+    
+    //Update the position of the beam
+    public void rotate(int angle) {
+        //Determine the end-points of the line
+        double endX = 100 * Math.cos(angle);
+        double endY = 100 * Math.sin(angle);
+        
+        beam = new Line2D.Double()
+    }
+    
+    //Return the line
+    public Line2D getLine() {
+        return beam;
+    }
+    
+}

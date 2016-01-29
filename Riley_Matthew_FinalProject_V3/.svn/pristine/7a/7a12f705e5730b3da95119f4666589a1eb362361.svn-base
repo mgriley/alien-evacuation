@@ -1,0 +1,77 @@
+/*
+ Matthew Riley
+ ICS3U-1 Final Project - Timer Class
+ May 13, 2014
+ */
+package riley_matthew_finalproject_v3;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Timer {
+
+    //The # of milliseconds that must elapse for the timer to be complete
+    private long requiredMillis;
+
+    //The start time of the timer
+    private long startTime;
+
+    //True if the timer is currently active
+    private boolean active;
+
+    //The start time of a game pause
+    private long timeAtPause;
+
+    //Constructor
+    public Timer() {
+        active = false; //The timer isn't active yet
+    }
+
+    //Resets/starts the timer (for a specified time)
+    public void reset(double requiredSecs) {
+        active = true;
+        startTime = System.currentTimeMillis();
+        requiredMillis = (long) (requiredSecs * 1000);
+    }
+
+    //Stop/deactivate an active timer
+    public void stop() {
+        if (active) {
+            active = false;
+        }
+    }
+
+    //Pause the timer if it is active
+    public void setPaused(boolean paused) {
+        if (active) {
+            //If it is being paused...
+            if (paused) {
+                //Determine the time of the pause
+                timeAtPause = System.currentTimeMillis();
+            } //if it is being unpaused...
+            else {
+                //Add the time of the pause to the start time
+                long pauseTime = System.currentTimeMillis() - timeAtPause;
+                startTime += pauseTime;
+            }
+        }
+    }
+
+    //Accessors
+    public boolean isActive() {
+        return active;
+    }
+
+    public boolean isComplete() {
+        if (active) {
+            //Calculate the elapsed time since the start of the timer
+            long currentTime = System.currentTimeMillis();
+            long elapsed = currentTime - startTime;
+            //Return whether the timer is up or not
+            return elapsed >= requiredMillis;
+        } else {
+            return false; //The timer isn't complete because it hasn't been activated yet
+        }
+    }
+}

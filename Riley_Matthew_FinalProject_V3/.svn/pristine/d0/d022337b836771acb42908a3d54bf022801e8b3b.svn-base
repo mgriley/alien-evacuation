@@ -1,0 +1,68 @@
+/**
+ * Matthew Riley
+ * ICS3U-1
+ * Final Project - Timer Class
+ * April 14, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Timer {
+
+    private long requiredMillis;
+    private long startTime;
+    private boolean active;
+
+    //Constructors
+    //Creates an empty timer
+    public Timer() {
+        active = false; //The timer isn't active yet
+    }
+
+    //Resets/starts the timer (for the same length of time)
+    public void reset() {
+        active = true;
+        startTime = System.currentTimeMillis();
+    }
+
+    //Resets/starts the timer (for a specified time)
+    public void reset(double requiredSecs) {
+        active = true;
+        startTime = System.currentTimeMillis();
+        requiredMillis = (long) (requiredSecs * 1000);
+    }
+    
+    //Stop/deactivate the timer if it is active
+    public void stop() {
+        if(active) {
+            active = false;
+        }
+    }
+    
+    public boolean isActive() {
+        return active;
+    }
+
+    //Returns the time elapsed (in seconds)
+    public long getElapsed() {
+        long currentTime = System.currentTimeMillis();
+        return (currentTime - startTime) / 1000;
+    }
+
+    public boolean isComplete() {
+        if (active) {
+            //Calculate the elapsed time since the start of the timer
+            long currentTime = System.currentTimeMillis();
+            long elapsed = currentTime - startTime;
+            //Return whether the timer is up or not
+            return elapsed >= requiredMillis;
+        }
+        else {
+            return false; //The timer isn't complete because it hasn't been activated yet
+        }
+    }
+}

@@ -1,0 +1,49 @@
+/**
+ * Matthew Riley ICS3U-1 Final Project - Spawn Locations Class (manages the
+ * spawn location of the catapults) April 18, 14
+ */
+package riley_matthew_finalproject_v3;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class SpawnLocation {
+
+    private final int x;
+    private final int y;
+    private boolean occupied;
+    private static int numLocations;
+    
+    public SpawnLocation(int _x, int _y) {
+        //Determine the point of the locations
+        x = _x;
+        y = _y;
+        
+        //No catapult is currently occupying the spawn location
+        occupied = false;
+    }
+    
+    public int getX() {
+        return x;
+    }
+    
+    public int getY() {
+        return y;
+    }
+    public static int getNumLocations() {
+        return numLocations;
+    }
+    
+    public boolean isOccupied() {
+        return occupied;
+    }
+    
+    public void setOccupied(boolean _occupied) {
+        occupied = _occupied;
+    }
+    
+    public static void setNumLocations(int num) {
+        numLocations = num;
+    }
+}

@@ -1,0 +1,103 @@
+/**
+ * Matthew Riley
+ * ICS3U-1
+ * Final Project - Constants Page
+ * April 14, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+/**
+ *
+ * @author matthewriley
+ */
+
+//Stores all constants for program
+public final class Const {
+    
+    private Const() {
+        //This class just stores cosntant variables
+    }
+    //Window and background
+    public static final int FIELD_WIDTH = 700;
+    public static final int FIELD_HEIGHT = 700;
+    
+    //Image URLs
+    public static final String ICON_URL = "Resources/Gray_Orb.png"; //ICON (in Mac doc) is NOT WORKING
+    public static final String BACKGROUND_URL = "Resources/Stone_Terrain.png";
+    public static final String TURRET_URL = "Resources/Nice_Turret.png";
+    public static final String MAIN_URL = "Resources/UFO.png";
+    public static final String BULLET_MAIN_URL = "Resources/Gold_Bullet.png";
+    public static final String BULLET_TURRET_URL = "Resources/Bullet.png";
+    public static final String WARNING_SIGN_URL = "Resources/Warning_Sign.png";
+    public static final String BEAM_URL = "Resources/Tractor_Beam.png";
+    public static final String EXPLOSION_URL = "Resources/Explosion.png";
+    public static final String HATCH_URL = "Resources/Closed_Hatch.png";
+    public static final String REPAIR_KIT_URL = "Resources/Repair_Kit.png";
+    public static final String DROPPABLE_ITEM_URL = "Resources/Droppable_Item.png";
+    public static final String ENEMY_BASE = "Resources/Closed_Hatch.png"; //CHANGE LATER
+    public static final String GAME_TITLE = "Resources/Closed_Hatch.png"; //CHANGE LATER
+    
+    //Main character (UFO)
+    public static final int MAIN_HEALTH = 500;
+    public static final int MAIN_SPEED = 5;
+    public static final int MOVE_TOLERANCE = 10;
+    public static final int ROTATION_TOLERANCE = 0;
+    public static final int MAIN_XPOS = FIELD_WIDTH/2;
+    public static final int MAIN_YPOS = FIELD_HEIGHT/4;
+    public static final int MAIN_WIDTH = 42; //CHANGE LATER
+    public static final int MAIN_HEIGHT = 42; //CHANGE LATER
+    public static final int BEAM_WIDTH = 65; //Change Later
+    public static final int BEAM_HEIGHT = 65; //Change later
+    public static final int MAIN_RANGE = 15;
+    public static final int MAIN_RECT_OFFSET_X = 0; //CHANGE LATER
+    public static final int MAIN_RECT_OFFSET_Y = 0; //CHANGE LATER
+    public static final int MAIN_BEARING = 90; 
+    public static final int UFO_ROTATION_SPEED = 50;
+
+    //Spawnable weapons (that are dropped on the enemy base)
+    public static final int DROP_DAMAGE = 10;
+    public static final int ITEM_SPAWN_FREQ = 5; //in seconds
+    public static final int TURRET_DAMAGE = 0; //CHANGE TO 10 - 0 JUST FOR DEBUGGING
+    public static final int TURRET_WIDTH = 50;
+    public static final int TURRET_HEIGHT = 50;
+    
+    //Misc. objects
+    public static final int HATCH_OFFSET = 75;
+    
+    //Bullets
+    public static final int AMMO = 10;
+    public static final int BULLET_SPEED = 3;
+    public static final int BULLET_LENGTH = 10; //Assume a circular bullet (with a square boundingBody)
+    public static final double EXPLOSION_LENGTH = 0.0625; //the explosion animation lasts 3 seconds
+    
+    //Turret Circle Attributes
+    public static final int RADIUS = 100; //The radius of the turret circle
+    public static final int NUM_TURRET_START = 4; //The number of turrets that are in level/wave 1 
+    public static final int TURRET_INCREASE = 2; //The # of turrets added to the turret circle each level
+    public static final int TURRET_LENGTH = 50;
+    public static final int TURRET_HEALTH = 20;
+     
+    //Pertaining to game timing
+    public static final double REPAIR_KIT_SPAWN_FREQ = 5;
+    public static final double SPAWN_SCALE = 95/100.0;
+    public static final int SPAWN_DELAY = 5;
+    public static final int NEW_LEVEL_DELAY = 4;
+    
+    //Fire timing
+    //Volley: A stream of bullets from the turrets
+    //Cooldown: After a volley of a certain length, the turrets don't shoot for this length of time
+    //Round: A round is a volley and a cooldown
+    //Phase: A type of fire (straight shot, rotary shot, etc.). There are multiple rounds in a phase
+    public static final int VOLLEY_TIME = 3;
+    public static final int COOLDOWN_TIME = 3;
+    public static final double FIRE_RATE_COOLDOWN = 0.125;
+    public static final int ROUNDS_PER_PHASE = 2; 
+    public static final int HEAT_SEEKING_LIFE_SPAN = 5;
+    
+    //Repair kits
+    public static final int REPAIR_KIT_HEAL = 50;
+    
+    //Other
+    public static final boolean DEBUGGING = true;
+}

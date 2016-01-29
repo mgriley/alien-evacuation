@@ -1,0 +1,433 @@
+/*
+ Matthew Riley
+ ICS3U-1 Final Project - Turret Class
+ May 17, 2014
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.io.IOException;
+import java.util.ArrayList;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Turret {
+
+    //Coordinates of the turret
+    private final int posX;
+    private final int posY;
+
+    //The required rotation angle to reach the destination angle
+    private double rotationAngle;
+
+    //The angle that the turret must rotate to
+    private double destinationAngle;
+
+    //The turret's curret bearing
+    private double bearing;
+
+    //Reference to UFO object
+    private static UFO myUFO;
+
+    //Reference to bullets
+    private static ArrayList<Bullet> turretBullets;
+
+    //Fire timing variable
+    private boolean newVolley;
+    private int roundCounter;
+    Timer coolDownTimer;
+    Timer fireRateTimer;
+    Timer volleyTimer;
+
+    //Counter for bullet patterning
+    private double patternCounter;
+
+    //A beam shot
+    private BeamShot beam;
+
+    //The rotation direction
+    private int rotationDirection;
+
+    //The turret's fire type
+    private int fireType;
+
+    //A counter for rotary turrets
+    private int rotaryTypeCounter;
+
+    //Constructor
+    public Turret(int _posX, int _posY, int _fireType) throws IOException {
+
+        //Set the turret to a position of the turret circle
+        posX = _posX;
+        posY = _posY;
+
+        //Set the fire type
+        fireType = _fireType;
+
+        //Start cooldown timer now that the turret is online
+        coolDownTimer = new Timer();
+
+        //Initialize the fire rate timer (the time between rounds of fire of a particular phase type)
+        fireRateTimer = new Timer();
+
+        //Prepare the fire time timer (how long a round of fire lasts before a cooldown is required)
+        volleyTimer = new Timer();
+        volleyTimer.reset(Const.VOLLEY_TIMES[fireType]);
+
+        //True whenever a new volley of fire is ready
+        newVolley = true;
+
+        //The roundCounter of fire of the paricular type (used to track phases)
+        roundCounter = 0;
+
+        //Set the fire patterning counter to 0
+        patternCounter = 0;
+
+        //Set the rotary type counter to 0 (Their are three different types of rotation shots)
+        rotaryTypeCounter = 0;
+
+        //Set the rotation direction to 1 (clockwise)
+        rotationDirection = 1;
+    }
+
+    /*
+     Accessors
+     */
+    //Return x-coordinate
+    public int getXPos() {
+        return posX;
+    }
+
+    //Return y-coordinate
+    public int getYPos() {
+        return posY;
+    }
+
+    //Get the turret's beam
+    public BeamShot getBeam() {
+        return beam;
+    }
+
+    //Establish reference to the UFO
+    public static void setUFO(UFO samurai) {
+        myUFO = samurai;
+    }
+
+    //Establish reference to bullets
+    public static void setBullets(ArrayList<Bullet> bullets) {
+        turretBullets = bullets;
+    }
+
+    //Control the turret AI
+    public void control() throws IOException {
+
+        //If the volleyTime is complete, start the cooldown timer 
+        if (volleyTimer.isComplete()) {
+
+            //If the cooldown timer hasn't started, activate it
+            if (!coolDownTimer.isActive()) {
+                coolDownTimer.reset(Const.COOLDOWN_TIMES[fireType]);
+
+                //If in the beam fire mode, dispose of the beam for cooldown
+                beam = null;
+
+            } //If the timer cooldown has started, check if it is complete
+            else {
+                //If the cool down is complete, restart the fire time timer
+                if (coolDownTimer.isComplete()) {
+
+                    //Start a new round of fire
+                    roundCounter++;
+
+                    //A new volley is about to start, so set newVolley to true
+                    newVolley = true;
+
+                    //Reset the fire timer
+                    volleyTimer.reset(Const.VOLLEY_TIMES[fireType]);
+
+                    //Stop/deactivate the coolDownTimer 
+                    coolDownTimer.stop();
+                } //While waiting for the cooldown to finish...
+                else {
+                    //Rotate the turrets to face the player
+                    rotateTo(myUFO.getXPos(), myUFO.getYPos());
+                }
+            }
+        } //If the timer isn't complete yet, continue to fire
+        else {
+            //Fire in the particular type/pattern
+            switch (fireType) {
+
+                //Fire Type 0: Rotate to target, then straight shot
+                case Const.BASIC_FIRE_TYPE:
+
+                    //Rotate to face the UFO's position
+                    rotateTo(myUFO.getXPos(), myUFO.getYPos());
+
+                    //If the fire rate timer isn't active, reset it
+                    if (!fireRateTimer.isActive()) {
+                        fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                    } //If it is already active...
+                    else {
+
+                        //If the timer is complete, fire
+                        if (fireRateTimer.isComplete()) {
+
+                            //Only fire 50% of the time (to vary the bullet consisentcy)
+                            if (Math.round(Math.random()) == 1) {
+                                //Fire a single, straight bullet in the direction of the UFO
+                                turretBullets.add(new Bullet(
+                                        posX,
+                                        posY,
+                                        myUFO.getXPos(),
+                                        myUFO.getYPos(),
+                                        Const.BULLET_DAMAGE,
+                                        Const.SIMPLE_BULLET_SPEED,
+                                        Const.RED_BULLET));
+                            }
+
+                            //A volley has been completely, so set newVolley to false
+                            newVolley = false;
+
+                            //Reset the timer
+                            fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                        }
+                    }
+
+                    break;
+
+                //Rotary shot
+                case Const.ROTARY_FIRE_TYPE:
+
+                    //Reset the fireRate timer
+                    if (!fireRateTimer.isActive()) {
+                        fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                    } //If it is already active...
+                    else {
+                        //If it is a new volley, rotate the turrets such that they produce the desired effects
+                        if (newVolley) {
+
+                            //Rotate to face the centre of the field
+                            rotateTo(Const.FIELD_WIDTH / 2, Const.FIELD_HEIGHT / 2);
+
+                            //Invert the rotation angle so that each turret faces outwards from the centre of the field
+                            rotationAngle += 180;
+                            rotationAngle %= 360;
+
+                            //Determine a rotation direction
+                            rotationDirection = 1;
+                            if (roundCounter % 2 == 0) {
+                                rotationDirection *= -1;
+                            }
+
+                            //If it is a beam shot, create a new beam
+                            if (rotaryTypeCounter == Const.BEAM_ROTARY) {
+                                beam = new BeamShot(posX, posY, (int) bearing);
+                            }
+                        }
+
+                        //Shoot differently depending on the rotary fire type
+                        switch (rotaryTypeCounter) {
+
+                            case Const.SIMPLE_ROTARY:
+                                //Slowly rotate the turrets
+                                rotationAngle += rotationDirection * 0.5;
+                                rotationAngle %= 360;
+
+                                //If the fire rate timer is complete, fire a single shot straight ahead
+                                if (fireRateTimer.isComplete()) {
+
+                                    //Fire a single, straight shot in the direction that the turret is currently facing
+                                    int desX = (int) (100 * Math.cos(Math.toRadians(rotationAngle - Const.TURRET_BEARING))) + posX;
+                                    int desY = (int) (100 * Math.sin(Math.toRadians(rotationAngle - Const.TURRET_BEARING))) + posY;
+
+                                    turretBullets.add(new Bullet(
+                                            posX,
+                                            posY,
+                                            desX,
+                                            desY,
+                                            Const.BULLET_DAMAGE,
+                                            Const.ROTARY_BULLET_SPEED,
+                                            Const.BLUE_BULLET));
+
+                                    //A volley has been fired, so set newVolley to false
+                                    newVolley = false;
+
+                                    //Reset the timer
+                                    fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                                }
+                                break;
+                            case Const.SINE_ROTARY:
+                                //Slowly rotate the turrets
+                                rotationAngle += rotationDirection * Math.sin(patternCounter);
+                                rotationAngle %= 360;
+
+                                //Increment the pattern counter
+                                patternCounter += 1 / 16.0;
+
+                                //If the fire rate timer is complete, fire a single shot straight ahead
+                                if (fireRateTimer.isComplete()) {
+
+                                    //Fire a single, straight shot in the direction that the turret is currently facing
+                                    int desX = (int) (100 * Math.cos(Math.toRadians(rotationAngle - Const.TURRET_BEARING))) + posX;
+                                    int desY = (int) (100 * Math.sin(Math.toRadians(rotationAngle - Const.TURRET_BEARING))) + posY;
+
+                                    turretBullets.add(new Bullet(
+                                            posX,
+                                            posY,
+                                            desX,
+                                            desY,
+                                            Const.BULLET_DAMAGE,
+                                            Const.ROTARY_BULLET_SPEED,
+                                            Const.GREEN_BULLET));
+
+                                    //A volley has been completely, so set newVolley to false
+                                    newVolley = false;
+
+                                    //Reset the timer
+                                    fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                                }
+                                break;
+                            case Const.BEAM_ROTARY:
+
+                                //Slowly rotate the turrets
+                                rotationAngle += rotationDirection * 0.5;
+                                rotationAngle %= 360;
+
+                                //Update the position of the beam
+                                beam.rotateTo((int) rotationAngle - Const.TURRET_BEARING);
+
+                                //A volley has been completely, so set newVolley to false
+                                newVolley = false;
+                                break;
+                            default:
+                                break;
+                        }
+
+                    }
+                    break;
+
+                //Fire Type 3: Heat-seeking shot
+                case Const.HEAT_SEEKING_FIRE_TYPE:
+
+                    //Reset the fireRate timer
+                    if (!fireRateTimer.isActive()) {
+                        fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                    } //If it is already active...
+                    else {
+
+                        //If the fire rate timer is complete, fire a heat-seeking shot
+                        if (fireRateTimer.isComplete()) {
+
+                            //Rotate to face the UFO
+                            rotateTo(myUFO.getXPos(), myUFO.getYPos());
+
+                            //Only math a bullet 1/4 of the time (to prevent all turrets firing at the same time)
+                            int randNum = (int) (Math.random() * 4) * 1 + 1;
+                            if (randNum == 4) {
+                                //Create a new bullet (using the heatseeking constructor)
+                                Bullet heatSeekingBullet = new Bullet(
+                                        posX,
+                                        posY,
+                                        Const.MISSILE_DAMAGE,
+                                        Const.MISSILE_SPEED,
+                                        Const.MISSILE_BULLET
+                                );
+
+                                //Add the bullet to the arraylist of bullets
+                                turretBullets.add(heatSeekingBullet);
+                            }
+
+                            //A volley has been completely, so set newVolley to false
+                            newVolley = false;
+
+                            //Reset the timer
+                            fireRateTimer.reset(Const.FIRE_RATE_TIMES[fireType]);
+                        }
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
+        //Change the fire type if the round of fire is complete
+        if (roundCounter == Const.ROUNDS_PER_PHASE) {
+
+            //If it is a rotary turret, change the rotary fire type
+            if (fireType == Const.ROTARY_FIRE_TYPE) {
+                rotaryTypeCounter++;
+                rotaryTypeCounter %= 3;
+            }
+
+            //Reset the volleyTimer for the new fire pattern
+            volleyTimer.reset(Const.VOLLEY_TIMES[fireType]);
+
+            //Stop the coolDown timer
+            coolDownTimer.stop();
+
+            //Reset the roundCounter counter
+            roundCounter = 0;
+        }
+
+    }
+
+    //Update the rotation angle so that it will rotate to the desired angle
+    public void rotateTo(int faceX, int faceY) {
+
+        //Calculate the polar co-ordinates of the destination
+        int deltaX = faceX - posX;
+        int deltaY = posY - faceY;
+        //Math.atan2 converts Cartesian coordinates to Polar coordinates
+        //tan@ = Y/X (Math.atan2 returns angle @)
+        destinationAngle = Math.atan((double) deltaY / deltaX);
+        //Map desintationAngle to 0-360 degrees (http://stackoverflow.com/questions/1311049/how-to-map-atan2-to-degrees-0-360)
+        //Right now it is in radians
+        destinationAngle = Math.toDegrees(destinationAngle); //Convert to degrees
+        //Correct discontinuities that occur in certain quadrants
+        //2nd or 3rd quadrant
+        if (deltaX < 0) {
+            destinationAngle += 180;
+        } //4th quadrant
+        else if (deltaX >= 0 && deltaY < 0) {
+            destinationAngle = 360 + destinationAngle;
+        }
+        //Calculate the required angle of rotation (from neutral image to destination angle)
+        rotationAngle = Const.TURRET_BEARING - destinationAngle;
+        //Make sure the most efficient path of rotation is being used
+        if (Math.abs(rotationAngle) > 180) {
+            if (rotationAngle < 0) {
+                rotationAngle += 360;
+            } //rotation angle > 0 (rotation angle cannot be 0 and be >180
+            else {
+                rotationAngle -= 360;
+            }
+        }
+        //Update the bearing
+        bearing = destinationAngle;
+    }
+
+    //Return the rotation operation necessary to rotate the image to the desired angle
+    public AffineTransformOp getRotationOp(int imgWidth, int imgHeight) {
+
+        //Determine the center of the image (in relation to image)
+        int anchorX = imgWidth / 2;
+        int anchorY = imgHeight / 2;
+
+        //Define rotational transformation
+        //Note: 
+        //The rotation angle is from the neutral image bearing to the destination angle
+        //It isn't from the current bearing to the destination angle
+        AffineTransform tx = new AffineTransform();
+        tx.rotate(Math.toRadians(rotationAngle), anchorX, anchorY);
+        AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BICUBIC);
+
+        return op;
+    }
+}

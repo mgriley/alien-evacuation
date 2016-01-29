@@ -1,0 +1,286 @@
+/*
+ * UFO character
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.imageio.ImageIO;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class UFO {
+
+    //Character attributes
+    private final int widthUFO, heightUFO;
+    private final int widthBeam, heightBeam;
+    private final int maxHealth;
+    private int health;
+    private boolean alive;
+    private final double speed;
+
+    //Positioning
+    private int posX, posY;
+
+    //Collisions
+    private Rectangle bodyZone;
+    private Rectangle tractorZone;
+    private Graphics2D g2;
+
+    //Images for the UFO and the tractor beam
+    BufferedImage imgUFO;
+    BufferedImage imgBeam;
+    
+    //Rotation
+    private int rotationAngle;
+
+    //Tracks whether the tractor beam is in use or not
+    boolean beamActive;
+    
+    //Tracks if the tractor beam is possessing an item
+    boolean possessingItem;
+
+    //Bullets
+    ArrayList<Turret> turrets;
+    Collisions myCollisions;
+
+    //Constructor
+    public UFO() throws IOException {
+
+        //Load UFO image
+        URL imgURL = getClass().getResource(Const.MAIN_URL);
+        imgUFO = ImageIO.read(imgURL);
+
+        //Load tractor beam image
+        imgURL = getClass().getResource(Const.BEAM_URL);
+        imgBeam = ImageIO.read(imgURL);
+
+        //Set health
+        maxHealth = Const.MAIN_HEALTH;
+        health = maxHealth;
+
+        //Set speed
+        speed = Const.MAIN_SPEED;
+
+        //Set positioning
+        posX = Const.MAIN_XPOS;
+        posY = Const.MAIN_YPOS;
+
+        //Set dimensions
+        widthUFO = Const.MAIN_WIDTH;
+        heightUFO = Const.MAIN_HEIGHT;
+        widthBeam = Const.BEAM_WIDTH;
+        heightBeam = Const.BEAM_HEIGHT; 
+
+        //Set alive
+        alive = true;
+
+        //Create the bounding body zones (used for collisions)
+        //Create body zone (zone used for collisions and hit detection)
+        bodyZone = new Rectangle(
+                posX - widthUFO / 2,
+                posY - heightUFO / 2,
+                widthUFO,
+                heightUFO
+        );
+        //Create attack zone (zone used for melee attacks)
+        tractorZone = new Rectangle(
+                posX - widthBeam / 2, //ADD OFFSETS (IF NECESSARY)
+                posY - heightBeam / 2, //ADD OFFSETS
+                widthBeam,
+                heightBeam   
+        );
+
+        //The beam is inactive to start
+        beamActive = false;
+        
+        //Start the rotation angle at 0
+        rotationAngle = 0;
+        
+        //The UFO doesn't start off possessing an item
+        possessingItem = false;
+    }
+
+//Getters
+    public int getHealth() {
+        return health;
+    }
+
+    public int getXPos() {
+        return posX;
+    }
+
+    public int getYPos() {
+        return posY;
+    }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
+    public boolean isActiveBeam() {
+        return beamActive;
+    }
+    
+    public boolean isPossessingItem() {
+        return possessingItem;
+    }
+
+    public BufferedImage getUFOImage() {
+        return imgUFO;
+    }
+
+    public BufferedImage getBeamImage() {
+        return imgBeam;
+    }
+
+    public Shape getBodyZone() {
+        return bodyZone;
+    }
+
+    public Shape getTractorZone() {
+        return tractorZone;
+    }
+
+    //Setters
+    public void setCollisions(Collisions publicRelations) {
+        myCollisions = publicRelations;
+    }
+
+    public void setTurrets(ArrayList<Turret> _turrets) {
+        turrets = _turrets;
+    }
+
+    public void setHealth(int _health) {
+        health = _health;
+    }
+
+    public void setPos(int _xPos, int _yPos) {
+        posX = _xPos;
+        posY = _yPos;
+    }
+    
+    public void setPossessingItem(boolean _possessingItem) {
+        possessingItem = _possessingItem;
+    }
+
+    //Methods
+    public void updateZones() {
+        //Update the location of the body zone and tractorZone to the UFO's current position
+        bodyZone.setLocation(
+                posX - widthUFO / 2,
+                posY - heightUFO / 2);
+        tractorZone.setLocation(
+                posX - widthBeam / 2,
+                posY - heightBeam / 2);
+
+    }
+
+    //Call when character gains or loses health
+    public void changeHealth(int change) {
+        health += change;
+        //If damage was dealt
+        if (change < 0) {
+
+            onDamage();
+            //Damage animation is same for all characters
+            //Check if character died
+            if (health <= 0) {
+                alive = false;
+                //Play death animation (character falls over)
+                onDeath();
+            }
+
+        } //If the character healed (only applicable to UFO and orb)
+        else {
+            //If character gained health, don't let them go over the max health
+            if (health > maxHealth) {
+                health = maxHealth;
+            }
+            onHeal();
+        }
+
+    }
+    
+    //Fully repair the UFO
+    public void fullRepair() {
+        health = maxHealth;
+    }
+
+    //Move towards a destination
+    public void move(int desX, int desY) {
+        //Move to destination X and Y, which are mouseX and mouseY
+        posX = desX;
+        posY = desY;
+    }
+    
+    //Animate the UFO to make it look spinning
+    public AffineTransformOp getRotationOp() {
+        //Determine the center of the image (in relation to image)
+        int anchorX = imgUFO.getWidth() / 2;
+        int anchorY = imgUFO.getHeight() / 2;
+
+        //Define rotational transformation
+        //Note: 
+        //The rotation angle is from the neutral image bearing to the destination angle
+        //It isn't from the current bearing to the destination angle
+        AffineTransform tx = new AffineTransform();
+        tx.rotate(Math.toRadians(rotationAngle), anchorX, anchorY);
+        AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BICUBIC);
+        
+        //Increment the rotation angle (to create a constantly spinning effect)
+        rotationAngle += Const.UFO_ROTATION_SPEED;
+        rotationAngle %= 360;
+        
+        return op;
+    }
+
+    public void controlBeam(boolean beamState) {
+
+        //Update the beamActive boolean
+        beamActive = beamState;
+        
+        //Manage the picking up of objects 
+        myCollisions.updateBeamCollisions(beamActive);
+    }
+
+    public void kill() {
+        alive = false;
+    }
+
+    //Events (animations and sound effects)
+    //For animation and sound effects: pass in URLS during constructor 
+    //This way, don't need all these methods for every subclass
+    //Called when a character moves
+    public void onMoveTo() {
+
+    }
+
+    public void onSwingAttack() {
+
+    }
+
+    //Called when a character is dealt damage
+    public void onDamage() {
+        //Play the animation (a transparency glitch) and sound effect corresponding to the URLs specified in the constructor
+    }
+
+    //Called when a character is healed
+    public void onHeal() {
+    }
+
+    //Called when a character dies 
+    //Overridden in all subclasses
+    public void onDeath() {
+    }
+}

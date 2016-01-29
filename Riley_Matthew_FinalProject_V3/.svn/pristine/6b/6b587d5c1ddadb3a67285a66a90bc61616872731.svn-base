@@ -1,0 +1,100 @@
+/*
+ * Matthew Riley
+ ICS3U-1
+ Final Project - Turret Circle Class
+ May 13, 14
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class TurretCircle {
+
+    //The # of turrets in the turret circle
+    private int numTurrets;
+
+    //The locations of the turrets in the turret circle
+    Point[] points;
+
+    //The health of the energy base
+    private int health;
+
+    //The coordinates of the centre of the turret circle
+    private int centreX;
+    private int centreY;
+
+    //The radius of the turret circle
+    private int radius;
+
+    //The index of the turret circle in the turret circles arraylist
+    private int circleIndex;
+
+    //Constructor
+    public TurretCircle(int _numTurrets, int _circleIndex) {
+
+        //Set the number of turrets in the circle
+        numTurrets = _numTurrets;
+
+        //Set the circle index of the circle
+        circleIndex = _circleIndex;
+
+        //Set the radius of the turret circle
+        radius = (circleIndex + 1) * Const.TURRET_CIRCLE_RADIUS_SPREAD;
+
+        //Set up the points array
+        points = new Point[numTurrets];
+
+        //The angle of increment (angle between each turret to ensure they are evenly distributed on the turret circle)
+        int angleIncrement = 360 / numTurrets;
+
+        //Calculate the centre of the turrets
+        centreX = Const.FIELD_WIDTH / 2;
+        centreY = Const.FIELD_HEIGHT / 2;
+
+        //Create the locations of the turrets in the turret circle
+        for (int i = 0; i < numTurrets; i++) {
+
+            //Use polar co-ordinates to determine the coordinates of the turrets
+            double theta = i * angleIncrement;
+
+            //Rotate each point slightly (so that the different turret circles mesh nicely)
+            theta += circleIndex * angleIncrement / 2;
+
+            //Convert theta to radians
+            theta = Math.toRadians(theta);
+
+            //Convert from polar to cartesian coordinates
+            int posX = (int) (radius * Math.cos(theta)) + centreX;
+            int posY = (int) (radius * Math.sin(theta)) + centreY;
+
+            //Add the point to the array of points
+            Point point = new Point(posX, posY);
+            points[i] = point;
+            //System.out.println("Point X " + i + ": " + posX);
+            //System.out.println("Point Y " + i + ": " + posY);
+        }
+    }
+
+    /*
+     Accessors
+     */
+    public Point[] getPoints() {
+        return points;
+    }
+
+    public int getCentreX() {
+        return centreX;
+    }
+
+    public int getCentreY() {
+        return centreY;
+    }
+}

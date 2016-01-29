@@ -1,0 +1,201 @@
+/*
+ Matthew Riley
+ ICS3U-1
+ Final Project - Constants Page
+ May 19, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+/**
+ *
+ * @author matthewriley
+ */
+//Stores all constants for program
+public final class Const {
+
+    private Const() {
+    }
+    
+    //The JPanel (aka field) dimensions
+    public static final int FIELD_WIDTH = 700;
+    public static final int FIELD_HEIGHT = 700;
+
+    //Image Paths (used to create image URLS)
+    public static final String BACKGROUND_URL = "Resources/Dirt_Terrain.png";
+    public static final String TURRET_URL = "Resources/Turret_Rugged.png";
+    public static final String MAIN_URL = "Resources/UFO_final.png";
+    public static final String LIGHTS_URL = "Resources/UFO_lights.png";
+    public static final String RED_BULLET_URL = "Resources/Red_Bullet.png";
+    public static final String BLUE_BULLET_URL = "Resources/Blue_Bullet.png";
+    public static final String GREEN_BULLET_URL = "Resources/Green_Bullet.png";
+    public static final String MISSILE_BULLET_URL = "Resources/Missile.png";
+    public static final String BEAM_URL = "Resources/Tractor_Beam.png";
+    public static final String EXPLOSION_URL = "Resources/Small_Explosion.png";
+    public static final String CLOSED_HATCH_URL = "Resources/Closed_Hatch.png";
+    public static final String ALIEN_HATCH_URL = "Resources/Alien_Hatch.png";
+    public static final String OPEN_HATCH_URL = "Resources/Open_Hatch.png";
+    public static final String ALIEN_URL = "Resources/Open_Hatch.png";
+    public static final String MENU_URL = "Resources/Menu.png";
+    public static final String OPACITY_LAYER_URL = "Resources/Opacity_Layer.png";
+    public static final String BASE_URL = "Resources/Octagon_Base_V3.png";
+
+    /*
+     UFO (aka main character) attributes
+     */
+    //UFO's health
+    public static final int MAIN_HEALTH = 500;
+
+    //The rotation speed of the UFO's lights
+    public static final int UFO_ROTATION_SPEED = 6;
+
+    /*
+     Health bar attributes
+     */
+    //The width of the heatlh bar
+    public static final int HEALTH_BAR_WIDTH = 30;
+
+    //The height of the health bar
+    public static final int HEALTH_BAR_HEIGHT = 5;
+
+    //The distance from the hatch to the corner of the field
+    public static final int HATCH_OFFSET = 60;
+
+    /*
+     Bullet atrributes
+     */
+    //The speed of a simple-type bullet
+    public static final int SIMPLE_BULLET_SPEED = 7;
+
+    //The speed of a rotary-type bullet
+    public static final int ROTARY_BULLET_SPEED = 3;
+
+    //The speed of a missile-type bullet
+    public static final int MISSILE_SPEED = 3;
+
+    //The length of a bullet's explosion animation
+    public static final double EXPLOSION_LENGTH = 0.0625;
+
+    //The damage dealt to the UFO by a non-heatseeking bullet upon a hit
+    public static final int BULLET_DAMAGE = 15;
+
+    //The damage dealth to the UFO by a heat-seeking bullet upon a hit
+    public static final int MISSILE_DAMAGE = 25;
+
+    //The damage dealt to the UFO every 17 milliseconds when it is contact with the beam
+    public static final int BEAM_DAMAGE = -3;
+
+    //Stores the indices for the different bullet images in the imgBullets array (values set in the game panel)
+    public static int BLUE_BULLET;
+    public static int RED_BULLET;
+    public static int GREEN_BULLET;
+    public static int MISSILE_BULLET;
+    public static int EXPLODING_BULLET;
+
+    /*
+     Turret Fire Types:
+    
+     Basic fire type: 
+     Fires a staright bullet at the UFO's current position
+    
+     Rotary fire type: 
+     Rotates while firing straight bullets to produce a bullet pattern.
+     Each rotary turret switches between a sprial pattern, sine wave pattern, and beam pattern.
+    
+     Missile Type:
+     Fires a heat-seeking missile at the UFO. The missile expires after a certain number of seconds.
+     */
+    //The different turret/fire types (for use a switch statement in the turret class)
+    public static final int BASIC_FIRE_TYPE = 0;
+    public static final int ROTARY_FIRE_TYPE = 1;
+    public static final int HEAT_SEEKING_FIRE_TYPE = 2;
+
+    //The different alternating subtypes of a rotary fire type turret
+    public static final int SIMPLE_ROTARY = 0;
+    public static final int SINE_ROTARY = 1;
+    public static final int BEAM_ROTARY = 2;
+
+    /*
+     Turret Fire Timing:
+    
+     Volley: The length of time a turret shoots a stream of bullets for
+    
+     Cooldown: After a volley of a certain length, the turrets don't shoot for this length of time
+    
+     Fire Rate: The time between consecutive bullets during a bullet volley
+    
+     Round: A round is one volley followed by one cooldown (only tracked for a rotary turret)
+    
+     Phase: A subtype of fire for a rotary turret. 
+     Each rotary turrets fires a certain # of rounds of certain phase, and then switches to the next phase.
+     */
+    //The volley times for each turret type
+    public static final int[] VOLLEY_TIMES = {4, 6, 1};
+
+    //The cooldown times for each turret type
+    public static final int[] COOLDOWN_TIMES = {0, 3, 5};
+
+    //The fire rate times for each turret type
+    public static final double[] FIRE_RATE_TIMES = {0.30, 0.125, 1};
+
+    //The # of rounds per subtype of fire for a rotary turret
+    public static final int ROUNDS_PER_PHASE = 2;
+
+    //The life span (in seconds) of a heat seeking missile (after this length of time, it explodes)
+    public static final int HEAT_SEEKING_LIFE_SPAN = 3;
+
+    /*
+     Turret Circle Attributes
+     */
+    //The difference in radius between consecutive turret circles (so that no turret iamges overlap)
+    public static final int TURRET_CIRCLE_RADIUS_SPREAD = 35;
+
+    //The number of different turret types (simple, rotary, and missile)
+    public static final int NUM_TURRET_TYPES = 3;
+
+    //The number of turrets that start off in each turret circle (at the start of a round)
+    public static final int NUM_TURRETS_PER_CIRCLE_START = 2;
+
+    //The maximum number of turrets that can be in a turret circle (such that the game maintains a reasonalbe difficulty)
+    public static final int TURRETS_PER_CIRCLE_CAP = 8;
+
+    //The # of turrets that are added to each turret circle every turret upgrade
+    public static final int TURRET_INCREASE = 2;
+
+    //The starting bearing of each turret
+    public static final int TURRET_BEARING = 90;
+
+    //The time of the first turret upgrade
+    public static final int TURRET_UPDGRADE_TIME = 30;
+
+    /*
+     Alien Attributes
+     */
+    //The amount of health the UFO is healed by every time it rescues an alien
+    public static final int ALIEN_HEAL = 20;
+
+    //The number of seconds between alien spawns
+    public static final double ALIEN_SPAWN_FREQ = 10;
+
+    /*
+     Game Animation Timing
+     */
+    //The time between when the UFO dies and when the game returns to the menu screen (such that the death animation can play)
+    public static final int GAME_OVER_DELAY = 8;
+
+    //The time that one image of the UFO's explosion animation is displayed for (such that the animation is smooth)
+    public static final double UFO_EXPLOSION_TIME = 0.165;
+
+    //The time that one image of a hatch's open/close animation is displayed for (such that the animation is smooth)
+    public static final double HATCH_CHANGE_TIME = 0.5;
+
+    //The time that the tractor beam image (aka alien rescued animation) is displayed for (such that the animation is smooth)
+    public static final double UFO_TRACTOR_BEAM_TIME = 0.25;
+
+    /*
+     Other
+     */
+    //The positioning offsets of the player's score (displayed in the cockpit of the UFO)
+    public static final int[] X_OFFSETS = {5, 7, 9};
+    public static final int[] FONT_SIZES = {14, 10, 6};
+}

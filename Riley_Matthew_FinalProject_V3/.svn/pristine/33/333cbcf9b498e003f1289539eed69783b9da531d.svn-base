@@ -1,0 +1,124 @@
+/**
+ * Matthew Riley
+ * ICS3U-1
+ * Final Project - Constants Page
+ * April 14, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+/**
+ *
+ * @author matthewriley
+ */
+
+//Stores all constants for program
+public final class Const {
+    
+    private Const() {
+        //This class just stores cosntant variables
+    }
+    //Window and background
+    public static final int FIELD_WIDTH = 700;
+    public static final int FIELD_HEIGHT = 700;
+    
+    //Image URLs
+    public static final String BACKGROUND_URL = "Resources/Dirt_Terrain.png";
+    public static final String TURRET_URL = "Resources/Turret_Small.png";
+    public static final String MAIN_URL = "Resources/UFO_final.png";
+    public static final String LIGHTS_URL = "Resources/UFO_lights.png";
+    public static final String RED_BULLET_URL = "Resources/Red_Bullet.png";
+    public static final String BLUE_BULLET_URL = "Resources/Blue_Bullet.png";
+    public static final String YELLOW_BULLET_URL = "Resources/Yellow_Bullet.png";
+    public static final String MISSILE_BULLET_URL = "Resources/Missile.png";
+    public static final String PURPLE_BULLET_URL = "Resources/Purple_Bullet.png";
+    public static final String BEAM_URL = "Resources/Tractor_Beam.png";
+    public static final String EXPLOSION_URL = "Resources/Explosion.png";
+    public static final String HATCH_URL = "Resources/Closed_Hatch_Small.png";
+    public static final String ALIEN_URL = "Resources/Alien.png";
+    public static final String MENU = "Resources/Menu.png";
+    
+    //Main character (UFO)
+    public static final int MAIN_HEALTH = 500;
+    public static final int MAIN_SPEED = 5;
+    public static final int MOVE_TOLERANCE = 10;
+    public static final int MAIN_XPOS = FIELD_WIDTH/2;
+    public static final int MAIN_YPOS = FIELD_HEIGHT/4;
+    public static final int MAIN_WIDTH = 24; //CHANGE LATER
+    public static final int MAIN_HEIGHT = 24; //CHANGE LATER
+    public static final int BEAM_WIDTH = 65; //Change Later
+    public static final int BEAM_HEIGHT = 65; //Change later
+    public static final int MAIN_RANGE = 15;
+    public static final int MAIN_BEARING = 90; 
+    public static final int UFO_ROTATION_SPEED = 6;
+    
+    //Health bar attributes
+    public static final int HEALTH_BAR_WIDTH = 30;
+    public static final int HEALTH_BAR_HEIGHT = 5;
+    
+    //Misc. objects
+    public static final int HATCH_OFFSET = 60;
+    
+    //Bullets
+    public static final int AMMO = 10;
+    public static final int BULLET_SPEED = 3;
+    public static final int BULLET_LENGTH = 10; //Assume a circular bullet (with a square boundingBody)
+    public static final double EXPLOSION_LENGTH = 0.0625; //the explosion animation lasts 3 seconds
+    public static final int BULLET_DAMAGE = 10; //CHANGE TO 10 - 0 JUST FOR DEBUGGING
+    public static final int BEAM_DAMAGE = -1;
+    
+    //Turret Circle Attributes
+    public static final int TURRET_WIDTH = 40;
+    public static final int TURRET_HEIGHT = 40;
+    public static final int TURRET_CIRCLE_RADIUS_SPREAD = 35; //The radius of the turret circle
+    public static final int NUM_TURRET_TYPES = 3;
+    public static final int NUM_TURRETS_PER_CIRCLE_START = 4; //The number of turrets that are in level/wave 1 
+    public static final int TURRETS_PER_CIRCLE_CAP = 8; //The maximum amt. of turrets that can be in a turret circle 
+    public static final int TURRET_INCREASE = 2; //The # of turrets added to the turret circle each level
+    public static final int TURRET_LENGTH = 50;
+    public static final int ENEMY_BASE_HEALTH = 20;
+    public static final int TURRET_BEARING = 90; //The starting bearing of the turret
+    public static final int TURRET_UPDGRADE_TIME = 15; //CHANGE TO HIGHER VALUE - LIKE 30
+     
+    //Pertaining to game timing
+    public static final double ALIEN_SPAWN_FREQ = 5;
+    public static final int ALIEN_HEAL = 50;
+    public static final double SPAWN_SCALE = 95/100.0;
+    public static final int NEW_LEVEL_DELAY = 4;
+    
+    /*
+    left off here - make different cooldowns and fire rates for each different fire type
+    *last change of plan: change name to Alien Evacuation - aliens spawn as the hatches, and rescue them by
+    picking them up with the tractor beam (must hold down over the alien to pick it up - dodge bullets whilst doing so!)
+    *number of turrets increases based on number of aliens rescued
+    *score based on # of aliens rescued
+    *slight health increase everytime an alien is rescued
+    *only 1 active alien to be rescued at a time (so you must move around a bit ti get to them)
+    */
+    
+    //IF TIME, MAKE A PULSATING TURRET FROM THE MIDDLE OF THE FIELD
+    //The different fire/turret Types
+    public static final int BASIC_FIRE_TYPE = 0;
+    public static final int ROTARY_FIRE_TYPE = 1;
+    public static final int HEAT_SEEKING_FIRE_TYPE = 2;
+    
+    //The different fire types for a rotary fire type turret
+    public static final int SIMPLE_ROTARY = 0;
+    public static final int SINE_ROTARY = 1;
+    public static final int BEAM_ROTARY = 2;
+    
+    
+    //Fire timing
+    //Volley: A stream of bullets from the turrets
+    //Cooldown: After a volley of a certain length, the turrets don't shoot for this length of time
+    //Round: A round is a volley and a cooldown
+    //Phase: A type of fire (straight shot, rotary shot, etc.). There are multiple rounds in a phase
+    public static final int[] VOLLEY_TIMES = {4, 6, 1};
+    public static final int[] COOLDOWN_TIMES = {0, 3, 5};
+    public static final double[] FIRE_RATE_TIMES = {0.5, 0.125, 1};
+    public static final int[] ROUNDS_PER_PHASE = {2, 2, 1};
+    public static final int HEAT_SEEKING_LIFE_SPAN = 3; //CHANGE LIFE-SPAN WITH LIMITED ANGLE CHANGE
+    
+    //Other
+    public static final boolean DEBUGGING = true;
+}

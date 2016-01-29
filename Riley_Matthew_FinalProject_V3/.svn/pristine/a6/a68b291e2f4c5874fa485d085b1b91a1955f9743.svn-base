@@ -1,0 +1,68 @@
+/*
+ * Matthew Riley
+ICS3U-1
+Final Project - Beam Shot Class
+April 28, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+import java.awt.geom.Line2D;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class BeamShot {
+    
+    private int orgX, orgY; //Start point of the line
+    private double endX, endY; //End point of the line
+    private int angle; //Angle of the line
+    
+    private Line2D beam; //The beam/line iteself
+    
+    //Constructor
+    public BeamShot(int _orgX, int _orgY, int _angle) {
+        
+        orgX = _orgX;
+        orgY = _orgY;
+        angle = _angle;
+        
+        //Determine the end-points of the line
+        endX = 1000 * Math.cos(Math.toRadians(angle)) + orgX;
+        endY = 1000 * Math.sin(Math.toRadians(angle)) + orgY;
+        
+        //Create a line
+        beam = new Line2D.Double(orgX, orgY, endX, endY);
+    }
+    
+    //Update the position of the beam
+    public void rotateTo(int newAngle) {
+        //Determine the end-points of the line
+        endX = 1000 * Math.cos(Math.toRadians(newAngle)) + orgX;
+        endY = 1000 * Math.sin(Math.toRadians(newAngle)) + orgY;
+        
+        //Set the location of the new endpoints of the line
+        beam.setLine(new Line2D.Double(orgX, orgY, endX, endY));
+    }
+    
+    //Get the coordinates of the beam
+    public int getStartX() {
+        return orgX;
+    }
+    public int getStartY() {
+        return orgY;
+    }
+    public int getEndX() {
+        return (int) endX;
+    }
+    public int getEndY() {
+        return (int) endY;
+    }
+    
+    //Return the line
+    public Line2D getLine() {
+        return beam;
+    }
+    
+}

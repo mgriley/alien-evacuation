@@ -1,0 +1,36 @@
+/*
+ * Matthew Riley
+ICS3U-1
+Final Project - Enemy Base
+April 30, 2014
+ */
+
+package riley_matthew_finalproject_v3;
+
+import java.awt.Rectangle;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class PulseGenerator {
+    
+    //Position of the enemy base
+    private int posX, posY;
+    
+    //Constructor
+    public PulseGenerator() {
+        //Set the position of the enemy base
+        posX = Const.FIELD_WIDTH/2;
+        posY = Const.FIELD_HEIGHT/2;
+    }
+    
+    public int getPosX() {
+        return posX;
+    }
+    
+    public int getPosY() {
+        return posY;
+    }
+    
+}

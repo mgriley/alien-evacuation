@@ -1,0 +1,263 @@
+/**
+ * Matthew Riley ICS3U-1 Final Project - Bullet Class April 14, 2014
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.Rectangle;
+import java.awt.geom.Area;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import javax.imageio.ImageIO;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Bullet {
+
+    private final int speed;
+    private final int damage;
+
+    private boolean active;
+
+    private double posX;
+    private double posY;
+
+    private double deltaX;
+    private double deltaY;
+
+    private int desX, desY;
+
+    private boolean firstUpdate;
+
+    private Rectangle boundingBody;
+
+    private BufferedImage img;
+
+    private boolean heatSeeking;
+    private boolean hit;
+
+    private Timer explosionTimer;
+
+    private Timer heatSeekingTimer;
+
+    private double bulletBearing;
+
+    //Reference to the UFO
+    private static UFO myUFO;
+
+    //Constructor - UFO destination
+    public Bullet(int orgX, int orgY, int _damage, String imgPath) throws IOException {
+        //Set active
+        active = true;
+        //Set spawn position
+        posX = orgX;
+        posY = orgY;
+        //Set bullet speed
+        speed = Const.BULLET_SPEED;
+        //the bullet hasn't been updated yet, so set first update to true
+        firstUpdate = true;
+        //Set bullet damage
+        damage = _damage;
+
+        //Create the image
+        URL imgURL = getClass().getResource(imgPath);
+        img = ImageIO.read(imgURL);
+
+        //Create the bounding body of the bullet
+        boundingBody = new Rectangle(
+                (int) posX - Const.BULLET_LENGTH / 2,
+                (int) posY - Const.BULLET_LENGTH / 2,
+                Const.BULLET_LENGTH,
+                Const.BULLET_LENGTH
+        );
+
+        //Typical bullets aren't heat seeking
+        heatSeeking = false;
+
+        //The bullet hasn't hit anything yet
+        hit = false;
+
+        //Initalize the explosion timer
+        explosionTimer = new Timer();
+
+        //Initialize the heat-seeking bullet timer
+        heatSeekingTimer = new Timer();
+    }
+
+    //Constructor (set destination)
+    public Bullet(int orgX, int orgY, int _desX, int _desY, int _damage, String imgPath) throws IOException {
+        //Set active
+        active = true;
+        //Set spawn position
+        posX = orgX;
+        posY = orgY;
+
+        //Set the destination
+        desX = _desX;
+        desY = _desY;
+
+        //Set bullet speed
+        speed = Const.BULLET_SPEED;
+        //the bullet hasn't been updated yet, so set first update to true
+        firstUpdate = true;
+        //Set bullet damage
+        damage = _damage;
+
+        //Create the image
+        URL imgURL = getClass().getResource(imgPath);
+        img = ImageIO.read(imgURL);
+
+        //Create the bounding body of the bullet
+        boundingBody = new Rectangle(
+                (int) posX - Const.BULLET_LENGTH / 2,
+                (int) posY - Const.BULLET_LENGTH / 2,
+                Const.BULLET_LENGTH,
+                Const.BULLET_LENGTH
+        );
+
+        //Typical bullets aren't heat seeking
+        heatSeeking = false;
+
+        //The bullet hasn't hit anything yet
+        hit = false;
+
+        //Initalize the explosion timer
+        explosionTimer = new Timer();
+
+        //Initialize the heat-seeking bullet timer
+        heatSeekingTimer = new Timer();
+    }
+
+    //Methods
+    public int getX() {
+        return (int) posX;
+    }
+
+    public int getY() {
+        return (int) posY;
+    }
+
+    public int getDamage() {
+        return damage;
+    }
+
+    public BufferedImage getImage() {
+        return img;
+    }
+
+    public Rectangle getBoundingBody() {
+        return boundingBody;
+    }
+
+    public void update() throws IOException {
+
+        if (!hit) {
+            //Deactive the bullet if it is offscreen
+            if (posX > Const.FIELD_WIDTH || posX < 0 || posY > Const.FIELD_HEIGHT || posY < 0) {
+                active = false;
+            } //Update the bullet's location
+            else {
+                //If the bullet is heatseeking...
+                if (heatSeeking) {
+
+                    //Start the lifespan timer on the first update
+                    if (firstUpdate) {
+                        //Set the life span of the heat-seeking bullet
+                        heatSeekingTimer.reset(Const.HEAT_SEEKING_LIFE_SPAN);
+                        
+                        //No longer the first update
+                        firstUpdate = false;
+                    }
+                    //If the bullet's life-span hasn't expired...
+                    if (!heatSeekingTimer.isComplete()) {
+                        
+                        //Calculate change in x and y from current position to destination position
+                        deltaX = myUFO.getXPos() - posX; //CHANGE HERE
+                        deltaY = myUFO.getYPos() - posY; //CHANGE HEREa
+
+                        //Calculate the angle between the bullet and the UFO
+                        bulletBearing = Math.atan2(deltaY, deltaX);
+
+                        //Calculate the bullet's path towards the UFO
+                        deltaX = Math.cos(bulletBearing);
+                        deltaY = Math.sin(bulletBearing);
+
+                        //Move the bullet towards the destination
+                        posX += deltaX * speed;
+                        posY += deltaY * speed;
+                    } 
+
+                    //If the timer is complete\
+                    else {
+                        //Deactivate the bullet
+                        active = false;
+                        
+                        //Run the bullet explosion animation
+                        hit();
+                    }
+                } //If the bullet isn't heatseeking, move it forward
+                else {
+                    //Only set the scaleX and scaleY once
+                    if (firstUpdate) {
+                        //Calculate change in x and y from current position to destination position
+                        deltaX = desX - posX;
+                        deltaY = desY - posY;
+
+                        //Calculate necessary change in x and y position using Polar Coordinate system
+                        double bulletAngle = Math.atan2(deltaY, deltaX);
+                        deltaX = Math.cos(bulletAngle);
+                        deltaY = Math.sin(bulletAngle);
+
+                        firstUpdate = false;
+                    }
+                    //Move the bullet in the direction of the destination
+                    posX += deltaX * speed;
+                    posY += deltaY * speed;
+                }
+
+                //Update the bounding body of the bullet (used for collision detection)
+                boundingBody.setLocation(
+                        (int) posX - Const.BULLET_LENGTH / 2,
+                        (int) posY - Const.BULLET_LENGTH / 2);
+            }
+        } //If the bullet has hit the UFO, draw the explosion
+        else {
+            //Once the explosion is complete, remove the bullet from the turretBullets arraylist so that it isn't drawn
+            if (explosionTimer.isComplete()) {
+                active = false;
+            }
+        }
+    }
+
+    //USE FOR LATER
+    public void makeHeatSeeking() {
+        heatSeeking = true;
+    }
+
+    public boolean isHit() {
+        return hit;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void hit() throws IOException {
+        //Set the bullet to hit
+        hit = true;
+
+        //Change the bullet's image to an image of an explosion
+        URL imgURL = getClass().getResource(Const.EXPLOSION_URL);
+        img = ImageIO.read(imgURL);
+
+        //Start the timer that dictates the length of the explosion animation
+        explosionTimer.reset(Const.EXPLOSION_LENGTH);
+    }
+
+    //Establish a reference to the UFO
+    public static void setUFO(UFO _myUFO) {
+        myUFO = _myUFO;
+    }
+}

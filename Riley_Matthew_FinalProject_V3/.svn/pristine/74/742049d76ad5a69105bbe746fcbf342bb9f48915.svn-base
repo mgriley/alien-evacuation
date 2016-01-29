@@ -1,0 +1,48 @@
+/*
+Matthew Riley
+ICS3U-1
+Final Project - Alien Evacuation
+May 13, 2014
+
+ */
+package riley_matthew_finalproject_v3;
+
+import java.io.IOException;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.WindowConstants;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Riley_Matthew_FinalProject_V3 {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) throws IOException, InterruptedException {
+
+        //Create and setup J-Panel
+        JFrame myFrame = new JFrame();
+        myFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        myFrame.setSize(Const.FIELD_WIDTH, Const.FIELD_HEIGHT);
+        myFrame.setResizable(false);
+        myFrame.setAlwaysOnTop(true);
+        myFrame.setVisible(true);
+
+        //Create GamePanel (J-Panel) and insert into J-Frame
+        GamePanel myPanel = new GamePanel();
+        myPanel.setSize(Const.FIELD_WIDTH, Const.FIELD_HEIGHT);
+        myPanel.setVisible(true);
+        myFrame.setContentPane(myPanel);
+
+        //Get Focus to GamePanel so that KeyListeners will work
+        myPanel.setFocusable(true);
+        myPanel.requestFocus();
+        
+        //Call our "run" code
+        myPanel.run();
+    }
+}
+

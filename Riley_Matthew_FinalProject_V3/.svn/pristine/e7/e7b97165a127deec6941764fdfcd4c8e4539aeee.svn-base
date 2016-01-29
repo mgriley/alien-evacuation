@@ -1,0 +1,119 @@
+/*
+ * Matthew Riley
+ ICS3U-1
+ Final Project - Droppable Items class (subclass of repair kit class)
+ April 22, 2014
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import javax.imageio.ImageIO;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Item {
+
+    //Boolean to store whether the item is possessed by the UFO's tractor beam or not
+    private boolean possessed;
+
+    //Reference the UFO
+    UFO myUFO;
+
+    private BufferedImage img;
+    private Rectangle bodyZone;
+    int posX, posY;
+    private boolean active;
+    private final int spawnLocIndex;
+
+    //Constructorss
+    public Item(SpawnLocation spawnLoc, int _spawnLocIndex, UFO UFO) throws IOException {
+        //Pass arguments to super-class
+        //Create the image
+        URL imgURL = getClass().getResource(Const.DROPPABLE_ITEM_URL);
+        img = ImageIO.read(imgURL);
+
+        //Create bounding body
+        bodyZone = new Rectangle(
+                spawnLoc.getX() - img.getWidth() / 2,
+                spawnLoc.getY() - img.getHeight() / 2,
+                img.getWidth(),
+                img.getHeight()
+        );
+
+        //Set the position
+        posX = spawnLoc.getX();
+        posY = spawnLoc.getY();
+
+        //Save the index of the spawn location (in the spawnLocations arrayList)
+        spawnLocIndex = _spawnLocIndex;
+
+        //Set the repair kit to active
+        active = true;
+
+        //Reference the UFO
+        myUFO = UFO;
+
+    }
+
+    //Accessors
+    public Shape getBodyZone() {
+        return bodyZone;
+    }
+
+    public BufferedImage getImage() {
+        return img;
+    }
+
+    public int getX() {
+        return posX;
+    }
+
+    public int getY() {
+        return posY;
+    }
+
+    public int getSpawnLocIndex() {
+        return spawnLocIndex;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+    
+    public boolean isPossessed() {
+        return possessed;
+    }
+    
+    public void setPossessed(boolean _possessed) {
+        possessed = _possessed;
+    }
+
+    //Methods
+    public void updatePosition() {
+
+        //If the object is possessed, move it with the UFO
+        if (possessed) {
+            posX = myUFO.getXPos();
+            posY = myUFO.getYPos();
+
+            //Update the bounding body zone
+            bodyZone.setLocation(
+                    posX - img.getWidth() / 2,
+                    posY - img.getHeight() / 2
+            );
+        }
+    }
+    
+    //Called when the item is used by the UFO (each item is single-use only)
+    public void use() {
+        active = false;
+    }
+    
+    
+}

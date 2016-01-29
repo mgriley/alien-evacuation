@@ -1,0 +1,172 @@
+/**
+ * Matthew Riley ICS3U-1 Final Project - Public Relations class (manages
+ * inter-object interactions, namely bullet collisions)
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.Graphics;
+import java.awt.Shape;
+import java.awt.geom.Area;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ *
+ * @author matthewriley
+ */
+public class Collisions {
+
+    private UFO myUFO;
+    private TurretCircle turretCircle;
+    private ArrayList<Turret> turrets;
+    private ArrayList<Bullet> turretBullets;
+    private ArrayList<RepairKit> repairKits;
+    private ArrayList<Item> items;
+
+    public Collisions(UFO UFO,
+            TurretCircle _turretCircle,
+            ArrayList<Turret> _turrets,
+            ArrayList<Bullet> _turretBullets,
+            ArrayList<RepairKit> _repairKits,
+            ArrayList<Item> _items
+    ) {
+
+        //Establish references to all significant game objects
+        myUFO = UFO;
+        turretCircle = _turretCircle;
+        turrets = _turrets;
+        turretBullets = _turretBullets;
+        repairKits = _repairKits;
+        items = _items;
+    }
+    
+    //Update turret circles
+    public void updateTurretCircle(TurretCircle newTurretCircle) {
+        turretCircle = newTurretCircle;
+    }
+
+    //Manage all bullet collsions
+    public void manageCollisions() throws IOException {
+
+        //Manage collisions between turret bullets and UFO body
+        Iterator<Bullet> itTurretBullets = turretBullets.iterator();
+        while (itTurretBullets.hasNext()) {
+            Bullet bullet = itTurretBullets.next();
+
+            //Ensure the bullet hasn't already hit something
+            if (!bullet.isHit()) {
+                //If the UFO is hit, decrease its health by the damage of the bullet and deactivate the bullet
+                if (isIntersecting(myUFO.getBodyZone(), bullet.getBoundingBody())) {
+                    myUFO.changeHealth(-bullet.getDamage());
+                    bullet.hit();
+                }
+            }
+        }
+
+        //Manage collisions between dropped objects and enemy base
+        Iterator<Item> itItems = items.iterator();
+        while (itItems.hasNext()) {
+            Item item = itItems.next();
+
+            //If the body zone of the enemy base is intersecting with the dropped object,
+            //damage the base and dispose of the item
+            if (isIntersecting(turretCircle.getBodyZone(), item.getBodyZone())) {
+
+                //The item must be dropped for it to damage the enemy base
+                if (!item.isPossessed()) {
+                    //Damage the turret circle
+                    turretCircle.damage();
+
+                    //Set the item to inactive so that it will disposed during the next run
+                    item.use();
+                }
+            }
+        }
+    }
+
+    public void updateBeamCollisions(boolean beamActive) {
+
+        //If the beam is active, manage iteraction between repair kits and the tractor beam
+        if (beamActive) {
+            Iterator<RepairKit> itKits = repairKits.iterator();
+            while (itKits.hasNext()) {
+                RepairKit repairKit = itKits.next();
+
+                //If the beam intersects with the repair kit, heal/repair the UFO
+                if (isIntersecting(myUFO.getTractorZone(), repairKit.getBodyZone())) {
+                    myUFO.changeHealth(Const.REPAIR_KIT_HEAL);
+                    //Set the repair kit to inactive, so that itKits cannot be used twice
+                    repairKit.use();
+                }
+            }
+        }
+
+        //Manage iteraction between possessable items and the tractor beam
+        Iterator<Item> itItems = items.iterator();
+        while (itItems.hasNext()) {
+            Item item = itItems.next();
+
+            //If the beam is active
+            if (beamActive) {
+                //Don't pick up another item is one is already possessed
+                if (!myUFO.isPossessingItem()) {
+                    //Check for intersection betweem the tractor zone and item body zone
+                    if (isIntersecting(myUFO.getTractorZone(), item.getBodyZone())) {
+                        item.setPossessed(true);
+                        myUFO.setPossessingItem(true);
+                    }
+                }
+            } //If the beam is inactive, set possessed to false
+            else {
+                item.setPossessed(false);
+                myUFO.setPossessingItem(false);
+            }
+        }
+
+    }
+
+    //Update the position of all bullets on the map
+    public void updateBullets() throws IOException {
+
+        //Update turret bullets
+        Iterator<Bullet> it = turretBullets.iterator();
+        while (it.hasNext()) {
+            Bullet bullet = it.next();
+            bullet.update();
+            //Remove inactive bullets
+            if (!bullet.isActive()) {
+                it.remove();
+            }
+        }
+    }
+
+    public void drawBullets(Graphics g, GamePanel myGamePanel) {
+
+        //Draw the turret bullets
+        //Don't use an iterator b/c itKits creates a concurrent modification exception
+        for (Bullet bullet : turretBullets.toArray(new Bullet[0])) {
+            if (bullet != null) {
+                g.drawImage(
+                        bullet.getImage(),
+                        bullet.getX() - bullet.getImage().getWidth() / 2,
+                        bullet.getY() - bullet.getImage().getHeight() / 2,
+                        myGamePanel);
+            }
+
+        }
+    }
+
+    public static boolean isIntersecting(Shape zoneA, Shape zoneB) {
+
+        //Create two new areas, based on the shape arguments
+        Area areaA = new Area(zoneA);
+        Area areaB = new Area(zoneB);
+
+        //Create a new area that is the itersection of the two areas
+        areaA.intersect(areaB);
+
+        //If this area isn't empty, there is a collision between the two areas
+        return !areaA.isEmpty();
+    }
+}

@@ -1,0 +1,862 @@
+/*
+ Matthew Riley
+ ICS3U-1
+ Final Project - GamePanel
+ May 17, 2014
+ */
+package riley_matthew_finalproject_v3;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+
+/*
+ TODO: 
+ Make a octagonal (or whatever shape 8 turrets makes) platform for the turrets
+ Make it have a miniature sirens that blink/spin (and that make indications when a turret upgrade occurs)
+
+ Change the mac dock icon 
+ */
+/**
+ *
+ * @author matthewriley
+ */
+public class GamePanel extends JPanel implements MouseListener, MouseMotionListener {
+
+    //Game images
+    BufferedImage imgBackground;
+    BufferedImage imgMenu;
+    BufferedImage imgTurret;
+    BufferedImage imgUFOLights;
+    BufferedImage imgOpacityLayer;
+    BufferedImage closedHatch;
+    BufferedImage openHatch;
+    BufferedImage alienHatch;
+    BufferedImage[] imgHatches;
+    BufferedImage[] imgBullets;
+    BufferedImage imgBase;
+
+    //Counter for the hatch animation
+    int animCounter = 0;
+
+    //True when the game is in its title screen
+    boolean menuScreen = true;
+
+    //True when a round of gameplay has just ended (b/c the UFO has been destroyed)
+    boolean gameOver = false;
+
+    //True when the game is paused
+    boolean paused = false;
+
+    //The player's highScore (the highest number of aliens rescued in a single game)
+    int highScore = 0;
+
+    //The UFO (main character)
+    UFO myUFO;
+
+    //An array list of turrets (enemy characters)
+    ArrayList<Turret> turrets;
+
+    //Tracks the time between alien spawns
+    Timer alienSpawnTimer;
+
+    //Tracks the time between turret updgrades (in which more turrets are added to the centre of the map)
+    Timer turretUpgradeTimer;
+
+    //The time between turret upgrades
+    int turretUpgradeTime;
+
+    //Tracks the time from the UFO's death to when the menu screen appears
+    Timer gameOverTimer;
+
+    //The X and Y coordinates of the mouse
+    int mouseX, mouseY;
+
+    //True when the mouse has left the JPanel during gameplay
+    boolean outsideBounds = false;
+
+    //Arraylist of all active bullets
+    ArrayList<Bullet> turretBullets = new ArrayList<>();
+
+    //ArrayList of spawn positions
+    ArrayList<SpawnLocation> spawnLocations = new ArrayList<>();
+
+    //Arraylist of turret circles (a turret's behaviour is determined by what turret circle it is in)
+    ArrayList<TurretCircle> turretCircles = new ArrayList<>();
+
+    //The number of turrets in each turret circle
+    int numTurrets = Const.NUM_TURRETS_PER_CIRCLE_START;
+
+    //A font variable (used to display the player's in-game score and highscore)
+    Font myFont;
+
+    //What the UFO's actual health must be scaled down to in order for it to be properly displayed by the healthbar
+    int scaleFactor;
+
+    //The darkGreen colour used for the player's highscore
+    Color darkGreen = Color.decode("#09621D");
+
+    //Off screen image (used for double-buffered)
+    BufferedImage imgOffScreen;
+
+    //The cursor (while in the JPanel)s
+    Cursor myCursor;
+
+    GamePanel() throws IOException {
+
+        //Change the default move cursor to a blank cursor when the UFO is being controlled
+        //This gives the effect that the UFO is the cursor
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        BufferedImage imgBlank = new BufferedImage(32, 32, BufferedImage.TRANSLUCENT);
+        Point cursorCenter = new Point(imgBlank.getWidth() / 2, imgBlank.getHeight() / 2);
+        myCursor = toolkit.createCustomCursor(imgBlank, cursorCenter, "Blank Cursor");
+        setCursor(myCursor);
+
+        //Load all game images from their PNG files into BufferedImages
+        URL imgURL = getClass().getResource(Const.BACKGROUND_URL);
+        imgBackground = ImageIO.read(imgURL);
+
+        imgURL = getClass().getResource(Const.MENU_URL);
+        imgMenu = ImageIO.read(imgURL);
+
+        imgURL = getClass().getResource(Const.LIGHTS_URL);
+        imgUFOLights = ImageIO.read(imgURL);
+
+        imgURL = getClass().getResource(Const.TURRET_URL);
+        imgTurret = ImageIO.read(imgURL);
+
+        imgURL = getClass().getResource(Const.OPACITY_LAYER_URL);
+        imgOpacityLayer = ImageIO.read(imgURL);
+
+        imgHatches = new BufferedImage[3];
+
+        imgURL = getClass().getResource(Const.CLOSED_HATCH_URL);
+        imgHatches[0] = ImageIO.read(imgURL);
+
+        imgURL = getClass().getResource(Const.OPEN_HATCH_URL);
+        imgHatches[1] = ImageIO.read(imgURL);
+
+        imgURL = getClass().getResource(Const.ALIEN_HATCH_URL);
+        imgHatches[2] = ImageIO.read(imgURL);
+
+        imgBullets = new BufferedImage[5];
+
+        imgURL = getClass().getResource(Const.BLUE_BULLET_URL);
+        imgBullets[0] = ImageIO.read(imgURL);
+        Const.BLUE_BULLET = 0;
+
+        imgURL = getClass().getResource(Const.RED_BULLET_URL);
+        imgBullets[1] = ImageIO.read(imgURL);
+        Const.RED_BULLET = 1;
+
+        imgURL = getClass().getResource(Const.GREEN_BULLET_URL);
+        imgBullets[2] = ImageIO.read(imgURL);
+        Const.GREEN_BULLET = 2;
+
+        imgURL = getClass().getResource(Const.MISSILE_BULLET_URL);
+        imgBullets[3] = ImageIO.read(imgURL);
+        Const.MISSILE_BULLET = 3;
+
+        imgURL = getClass().getResource(Const.EXPLOSION_URL);
+        imgBullets[4] = ImageIO.read(imgURL);
+        Const.EXPLODING_BULLET = 4;
+        
+        imgURL = getClass().getResource(Const.BASE_URL);
+        imgBase = ImageIO.read(imgURL);
+
+        //Create a spawn location at each corner of the field
+        spawnLocations.add(new SpawnLocation(Const.HATCH_OFFSET, Const.HATCH_OFFSET));
+        spawnLocations.add(new SpawnLocation(Const.FIELD_WIDTH - Const.HATCH_OFFSET, Const.HATCH_OFFSET));
+        spawnLocations.add(new SpawnLocation(Const.HATCH_OFFSET, Const.FIELD_HEIGHT - Const.HATCH_OFFSET));
+        spawnLocations.add(new SpawnLocation(Const.FIELD_WIDTH - Const.HATCH_OFFSET, Const.FIELD_HEIGHT - Const.HATCH_OFFSET));
+
+        //Instantiate all game objects
+        myUFO = new UFO();
+        turrets = new ArrayList<>();
+        Turret.setBullets(turretBullets);
+        Turret.setUFO(myUFO);
+
+        //Instantiate the turret circles
+        for (int i = 0; i < Const.NUM_TURRET_TYPES; i++) {
+            turretCircles.add(new TurretCircle(numTurrets, i));
+        }
+
+        //Create references between game classes
+        myUFO.setTurrets(turrets);
+        Bullet.setUFO(myUFO);
+
+        //Instantiate all game timerss
+        alienSpawnTimer = new Timer();
+        turretUpgradeTimer = new Timer();
+        gameOverTimer = new Timer();
+
+        //Setup each turret circle
+        for (TurretCircle turretCircle : turretCircles) {
+            //For each point on the turret circle (the points are evenly distributed around the turret circle)...
+            for (int i = 0; i < turretCircle.getPoints().length; i++) {
+                //Spawn a turret at that point
+                turrets.add(new Turret(turretCircle.getPoints()[i].x, turretCircle.getPoints()[i].y, turretCircles.indexOf(turretCircle)));
+            }
+        }
+
+        //Set the scale factor (for drawing the UFO's healthbar to scale)
+        scaleFactor = Const.MAIN_HEALTH / Const.HEALTH_BAR_WIDTH;
+
+        //Create a buffered image with the JPanel's dimensions (for double-buffering)
+        imgOffScreen = new BufferedImage(Const.FIELD_WIDTH, Const.FIELD_HEIGHT, BufferedImage.TYPE_INT_RGB);
+
+        //Enable all action listeners
+        addMouseListener(this);
+        addMouseMotionListener(this);
+    }
+
+    //Draws the image into the JPanel
+    @Override
+    public void paintComponent(Graphics g) {
+
+        //Create a graphics 2d area from the off-screen image's graphics (for double-buffering)
+        Graphics2D offScreenG = (Graphics2D) imgOffScreen.getGraphics();
+
+        //Draw the Background/Terrain
+        offScreenG.drawImage(imgBackground, 0, 0, this);
+
+        //Draw the enemy base
+        offScreenG.drawImage(
+                imgBase,
+                Const.FIELD_WIDTH/2 - imgBase.getWidth()/2,
+                Const.FIELD_HEIGHT/2 - imgBase.getHeight()/2,
+                this);
+        
+        //Draw the hatches/spawn locations
+        for (SpawnLocation mySpawnLoc : spawnLocations.toArray(new SpawnLocation[0])) {
+            offScreenG.drawImage(
+                    imgHatches[mySpawnLoc.getImgIndex()],
+                    mySpawnLoc.getX() - imgHatches[mySpawnLoc.getImgIndex()].getWidth() / 2,
+                    mySpawnLoc.getY() - imgHatches[mySpawnLoc.getImgIndex()].getHeight() / 2,
+                    this
+            );
+        }
+
+        //Draw the enemy turrets and any active turret beamss
+        for (Turret turret : turrets.toArray(new Turret[0])) {
+            //Draw the turret
+            offScreenG.drawImage(
+                    turret.getRotationOp(imgTurret.getWidth(), imgTurret.getHeight()).filter(imgTurret, null),
+                    turret.getXPos() - imgTurret.getWidth() / 2,
+                    turret.getYPos() - imgTurret.getHeight() / 2,
+                    this);
+
+            //If the turret has an active beam...
+            if (turret.getBeam() != null) {
+
+                //Create the stroke of the turret beam
+                BasicStroke beamStroke = new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+                offScreenG.setStroke(beamStroke);
+
+                //Set the colour of the beam
+                offScreenG.setPaint(Color.RED);
+
+                //Draw the beam line
+                BeamShot beam = turret.getBeam();
+                offScreenG.drawLine(beam.getStartX(), beam.getStartY(), beam.getEndX(), beam.getEndY());
+            }
+
+        }
+
+        //Draw the turret bullets
+        for (Bullet bullet : turretBullets.toArray(new Bullet[0])) {
+
+            //If the bullet isn't null...
+            if (bullet != null) {
+
+                BufferedImage imgBullet = imgBullets[bullet.getImgIndex()];
+
+                //If the bullet is heatseeking...
+                if (bullet.isHeatSeeking()) {
+                    //Draw the missile (rotated to face the UFO)
+                    offScreenG.drawImage(
+                            bullet.getRotationOp(imgBullet.getWidth(), imgBullet.getHeight()).filter(imgBullet, null),
+                            bullet.getX() - imgBullet.getWidth() / 2,
+                            bullet.getY() - imgBullet.getHeight() / 2,
+                            this);
+                } //If the bullet isn't heatseeking...
+                else {
+                    //Draw the unrotated image of the bullet
+                    offScreenG.drawImage(
+                            imgBullet,
+                            bullet.getX() - imgBullet.getWidth() / 2,
+                            bullet.getY() - imgBullet.getHeight() / 2,
+                            this);
+                }
+            }
+
+        }
+
+        //Draw the image of the tractor beam if it is currently active
+        if (myUFO.isBeamActive()) {
+            offScreenG.drawImage(
+                    myUFO.getBeamImage(),
+                    myUFO.getXPos() - myUFO.getBeamImage().getWidth() / 2,
+                    myUFO.getYPos() - myUFO.getBeamImage().getHeight() / 2,
+                    this);
+        }
+
+        //If the game is in its menu/title screen...
+        if (menuScreen) {
+
+            //Draw the opacity layer (to make the menu text stand out on the background)
+            offScreenG.drawImage(
+                    imgOpacityLayer,
+                    0,
+                    0,
+                    this);
+
+            //Draw the game menu
+            offScreenG.drawImage(
+                    imgMenu,
+                    0,
+                    0,
+                    this);
+
+            //Set the style and colour of the font (for the player's highScore)
+            myFont = new Font("Stencil", Font.BOLD, 30);
+            offScreenG.setFont(myFont);
+            offScreenG.setColor(darkGreen);
+
+            //Draw the player's highScore 
+            offScreenG.drawString(highScore + " aliens rescued", Const.FIELD_WIDTH / 2 - 135, 210);
+
+        } //If the game isn't in its menu screen...
+        else {
+            //If the game is paused...
+            if (paused) {
+
+                //If the game isn't over...
+                if (!gameOver) {
+                    //Draw the opacity layer (to make the menu text stand out on the background)
+                    offScreenG.drawImage(
+                            imgOpacityLayer,
+                            0,
+                            0,
+                            this);
+
+                    //Set the font and colour of the paused message
+                    myFont = new Font("Futura", Font.PLAIN, 20);
+                    offScreenG.setFont(myFont);
+                    offScreenG.setColor(Color.black);
+                    offScreenG.drawString(
+                            "Please keep the mouse on-screen. Return the mouse to the UFO to resume.",
+                            15,
+                            150);
+                }
+            }
+        }
+
+        //Draw the image of UFO (centred on its position)
+        offScreenG.drawImage(
+                myUFO.getUFOImage(),
+                myUFO.getXPos() - myUFO.getUFOImage().getWidth() / 2,
+                myUFO.getYPos() - myUFO.getUFOImage().getHeight() / 2,
+                this);
+
+        //If the game isn't over...
+        if (!gameOver) {
+            //Draw the image of the image of the UFO lights (with a rotation animation)
+            offScreenG.drawImage(
+                    myUFO.getRotationOp().filter(imgUFOLights, null),
+                    myUFO.getXPos() - myUFO.getUFOImage().getWidth() / 2,
+                    myUFO.getYPos() - myUFO.getUFOImage().getHeight() / 2,
+                    this);
+
+            //Create a red to green gradient for the health bar
+            GradientPaint redToGreen = new GradientPaint(
+                    myUFO.getXPos() + Const.HEALTH_BAR_WIDTH / 2,
+                    0,
+                    Color.GREEN,
+                    myUFO.getXPos() - Const.HEALTH_BAR_WIDTH / 2,
+                    0,
+                    Color.RED,
+                    false
+            );
+
+            //Set the paint/fill of the graphic area to the created gradient
+            offScreenG.setPaint(redToGreen);
+
+            //Scale the UFO's health
+            int scaledCurrentHealth = myUFO.getHealth() / scaleFactor;
+
+            //Fill health bar with the gradient
+            offScreenG.fill(new Rectangle2D.Double(
+                    myUFO.getXPos() - Const.HEALTH_BAR_WIDTH / 2,
+                    myUFO.getYPos() + myUFO.getUFOImage().getHeight() / 2 + 2,
+                    scaledCurrentHealth,
+                    Const.HEALTH_BAR_HEIGHT
+            ));
+
+            //Determine the # of digits in aliensRescued
+            int copy = myUFO.getScore();
+            int digits = 1;
+            while (copy / 10 > 0) {
+                digits++;
+                copy /= 10;
+            }
+
+            //Set the font and colour of text for the player's in-game score
+            myFont = new Font("Monospaced", Font.BOLD, Const.FONT_SIZES[digits - 1]);
+            offScreenG.setFont(myFont);
+            offScreenG.setColor(Color.BLACK);
+
+            //Compute the y-offset of the text
+            int yOffset = Const.FONT_SIZES[digits - 1] / 2 - 1;
+
+            //Draw the player's in-game score over the UFO's cockpit
+            offScreenG.drawString(myUFO.getScore() + "", myUFO.getXPos() - Const.X_OFFSETS[digits - 1], myUFO.getYPos() + yOffset);
+        }
+
+        //If the game is over...
+        else {
+
+            //If the explosion animation has finished...
+            if (gameOverTimer.getElapsed() > Const.GAME_OVER_DELAY/2) {
+                
+                //Set the style and colour of the font (for the player's score report)
+                myFont = new Font("Stencil", Font.BOLD, 50);
+                offScreenG.setFont(myFont);
+                offScreenG.setColor(Color.BLACK);
+
+                //Draw the low opacity layer (to make the text stand out well)
+                //Set the style and colour of the font (for the player's score report)
+            myFont = new Font("Stencil", Font.BOLD, 50);
+            offScreenG.setFont(myFont);
+            offScreenG.setColor(Color.BLACK);
+
+            //Draw the player's final score for the round
+            offScreenG.drawString(myUFO.getScore() + " aliens rescued", 140, 150);
+
+            //Draw the low opacity layer (to make the text stand out)
+            offScreenG.drawImage(
+                    imgOpacityLayer,
+                    0,
+                    0,
+                    this);
+                
+                //Draw the player's final score for the round
+                offScreenG.drawString(myUFO.getScore() + " aliens rescued", 140, 150);
+
+                //If a new highscore was achieved...
+                if (myUFO.getScore() > highScore) {
+                    //Alert the player
+                    offScreenG.drawString("New Highscore", 160, 200);
+                }
+            }
+
+        }
+
+        //Draws the off screen image to the screen
+        g.drawImage(imgOffScreen, 0, 0, this);
+    }
+
+    public void run() throws InterruptedException, IOException {
+
+        //Set to unpaused
+        paused = false;
+
+        //An infinite loops that runs 60 times per seconds (60fps)
+        while (true) {
+
+            //Unless the game is paused, control game logic
+            if (!paused) {
+
+                /*
+                 Update bullet positions
+                 */
+                Iterator<Bullet> it = turretBullets.iterator();
+                while (it.hasNext()) {
+                    Bullet bullet = it.next();
+
+                    //Update the bullet's position
+                    bullet.update();
+
+                    //Remove inactive bullets
+                    if (!bullet.isActive()) {
+                        it.remove();
+                    }
+                }
+
+                //If the UFO is alive...
+                if (myUFO.isAlive()) {
+
+                    //Move and rotate the UFO
+                    myUFO.move(mouseX, mouseY);
+
+                    //Control the UFO's tractor beam
+                    myUFO.controlBeam();
+
+                    //Unless the game is in its title screen, run gameplay logic
+                    if (!menuScreen) {
+
+                        //If a turret updgrade is necessary...
+                        if (turretUpgradeTimer.isComplete()) {
+
+                            //Increment the # of circles, which increases the difficulty of gameplay
+                            numTurrets += Const.TURRET_INCREASE;
+
+                            //Remove all of the old turrets
+                            Iterator<Turret> itTurret = turrets.iterator();
+                            while (itTurret.hasNext()) {
+                                itTurret.next();
+                                itTurret.remove();
+                            }
+
+                            //Remove the old turret circles
+                            Iterator<TurretCircle> itTurretCircles = turretCircles.iterator();
+                            while (itTurretCircles.hasNext()) {
+                                itTurretCircles.next();
+                                itTurretCircles.remove();
+                            }
+
+                            //Create new turret circles (each with an increases number of turrets)
+                            for (int i = 0; i < Const.NUM_TURRET_TYPES; i++) {
+                                turretCircles.add(new TurretCircle(numTurrets, i));
+                            }
+
+                            //Add turrets to the locations on the new turret circles
+                            for (TurretCircle turretCircle : turretCircles) {
+                                //Spawn a turret at each point on the turretCircle
+                                for (int i = 0; i < turretCircle.getPoints().length; i++) {
+
+                                    //Spawn a turret at each of points of the turretCircle
+                                    turrets.add(new Turret(turretCircle.getPoints()[i].x, turretCircle.getPoints()[i].y, turretCircles.indexOf(turretCircle)));
+                                }
+                            }
+
+                            //Unless the max amt. of turrets per circle (aka max level) has been reached, restart the timer
+                            if (numTurrets >= Const.TURRETS_PER_CIRCLE_CAP) {
+                                turretUpgradeTimer.stop();
+                            }
+                            else {
+
+                                //Make the each turret upgrade interval progressively longer
+                                turretUpgradeTime *= 2;
+
+                                //Reset the turret upgrade timer
+                                turretUpgradeTimer.reset(turretUpgradeTime);
+                            }
+                        }
+
+                        //Control all enemy AI turrets
+                        Iterator<Turret> itTurret = turrets.iterator();
+                        while (itTurret.hasNext()) {
+                            Turret turret = itTurret.next();
+                            //Control the AI
+                            turret.control();
+                        }
+
+                        /*
+                         Manage Collisions
+                         */
+                        //Manage collisions between turret bullets and UFO body
+                        Iterator<Bullet> itTurretBullets = turretBullets.iterator();
+                        while (itTurretBullets.hasNext()) {
+                            Bullet bullet = itTurretBullets.next();
+
+                            //f the bullet hasn't already hit something...
+                            if (!bullet.isHit()) {
+                                //Calculate the distance between the UFO's centre and the bullet's centre
+                                int distance = (int) Math.sqrt(Math.pow(myUFO.getXPos() - bullet.getX(), 2) + Math.pow(myUFO.getYPos() - bullet.getY(), 2));
+
+                                //If the UFO is hit by the bullet...
+                                if (distance < myUFO.getUFOImage().getWidth() / 2 + imgBullets[bullet.getImgIndex()].getWidth() / 2) {
+                                    //Damage the UFO
+                                    myUFO.changeHealth(-bullet.getDamage());
+
+                                    //Set the bullet to hit (which will deactivate it)
+                                    bullet.hit();
+                                }
+                            }
+                        }
+
+                        //Determine the UFO's rectangular bounding zone (aka perimeter rectangle)
+                        Rectangle2D boundingRect = new Rectangle2D.Double(
+                                myUFO.getXPos() - myUFO.getUFOImage().getWidth() / 2,
+                                myUFO.getYPos() - myUFO.getUFOImage().getHeight() / 2,
+                                myUFO.getUFOImage().getWidth(),
+                                myUFO.getUFOImage().getHeight()
+                        );
+
+                        //Manage collisions between beams and the UFO body
+                        Iterator<Turret> itTurrets = turrets.iterator();
+                        while (itTurrets.hasNext()) {
+                            Turret turret = itTurrets.next();
+
+                            //If the beam is active...
+                            if (turret.getBeam() != null) {
+                                //If the beam intersects the UFO's bounding rectangle...
+                                if (turret.getBeam().getLine().intersects(boundingRect)) {
+                                    //Damage the UFO
+                                    myUFO.changeHealth(Const.BEAM_DAMAGE);
+                                }
+                            }
+                        }
+
+                        //Manage collisions between the UFO's tractor beam and aliens to be rescued
+                        Iterator<SpawnLocation> itAliens = spawnLocations.iterator();
+                        while (itAliens.hasNext()) {
+                            SpawnLocation mySpawnLoc = itAliens.next();
+
+                            if (mySpawnLoc.isActiveAlien()) {
+                                //Calculate the distance between the UFO's centre and the alien's centre
+                                int distance = (int) Math.sqrt(Math.pow(myUFO.getXPos() - mySpawnLoc.getX(), 2) + Math.pow(myUFO.getYPos() - mySpawnLoc.getY(), 2));
+
+                                //If the UFO is close to the alien...
+                                if (distance < myUFO.getUFOImage().getWidth() / 2 + 10) {
+                                    //Play the alien rescued animation (which also increments the player's score)
+                                    myUFO.onRescue();
+
+                                    //Heal the UFO
+                                    myUFO.changeHealth(Const.ALIEN_HEAL);
+
+                                    //The alien is rescued, so the spawn location is now free
+                                    mySpawnLoc.setOccupied(false);
+                                }
+                            }
+                        }
+
+                        //Manage spawn locations and determine if they are at full occupance or not
+                        boolean fullOccupance = true;
+                        for (SpawnLocation spawnLoc : spawnLocations) {
+                            spawnLoc.manage();
+                            if (!spawnLoc.isOccupied()) {
+                                fullOccupance = false;
+                            }
+                        }
+
+                        //Spawn aliens, unless spawn locations are at full occupance
+                        if (!fullOccupance) {
+
+                            //If the spawn timer is complete...
+                            if (alienSpawnTimer.isComplete()) {
+
+                                //Generate a random spawn location (from 0 to 3)
+                                int randomIndex;
+                                do {
+                                    randomIndex = (int) (Math.random() * 4) * 1 + 0;
+                                } //Repeat until an unoccupied spawn location is found
+                                while (spawnLocations.get(randomIndex).isOccupied());
+
+                                //Set the spawn location to occupied
+                                spawnLocations.get(randomIndex).setOccupied(true);
+
+                                //Reset the spawn timer
+                                alienSpawnTimer.reset(Const.ALIEN_SPAWN_FREQ);
+                            }
+                        }
+                    }
+
+                    //If the game is in its titlescreen...
+                    else {
+                        //rotate the turrets to face the UFO (in preparation for gameplay)
+                        Iterator<Turret> itTurrets = turrets.iterator();
+                        while (itTurrets.hasNext()) {
+                            Turret turret = itTurrets.next();
+                            turret.rotateTo(myUFO.getXPos(), myUFO.getYPos());
+                        }
+                    }
+
+                } //If the UFO has been destroyed/killed...
+                else {
+                    //If the game over timer hasn't been started yet...
+                    if (!gameOverTimer.isActive()) {
+                        //Start the gameOver timer
+                        gameOverTimer.reset(Const.GAME_OVER_DELAY);
+                    }
+                    //Set the game to over
+                    gameOver = true;
+
+                    //If the timer isn't complete...
+                    if (!gameOverTimer.isComplete()) {
+
+                        //Play the UFO's explosion animation
+                        myUFO.onDeath();
+
+                    } //If the timer is complete...
+                    else {
+
+                        //Stop the game over timer (for the next game over)
+                        gameOverTimer.stop();
+
+                        //Return to the menu screen
+                        menuScreen = true;
+
+                        //Set all hatches to unoccupied
+                        Iterator<SpawnLocation> itSpawnLoc = spawnLocations.iterator();
+                        while (itSpawnLoc.hasNext()) {
+                            SpawnLocation mySpawnLoc = itSpawnLoc.next();
+
+                            //Set the alien's spawn location to unoccupied
+                            mySpawnLoc.setOccupied(false);
+                        }
+
+                        //Reset the number of turrets
+                        numTurrets = Const.NUM_TURRETS_PER_CIRCLE_START;
+
+                        //Remove all of the current turrets
+                        Iterator<Turret> itTurret = turrets.iterator();
+                        while (itTurret.hasNext()) {
+                            itTurret.next();
+                            itTurret.remove();
+                        }
+
+                        //Remove the current turret circles
+                        Iterator<TurretCircle> itTurretCircles = turretCircles.iterator();
+                        while (itTurretCircles.hasNext()) {
+                            itTurretCircles.next();
+                            itTurretCircles.remove();
+                        }
+
+                        //Create new turret circles
+                        for (int i = 0; i < Const.NUM_TURRET_TYPES; i++) {
+                            turretCircles.add(new TurretCircle(numTurrets, i));
+                        }
+
+                        //Add turrets to the locations on the new turret circles
+                        for (TurretCircle turretCircle : turretCircles) {
+                            //Spawn a turret at each point on the turretCircle
+                            for (int i = 0; i < turretCircle.getPoints().length; i++) {
+                                //Spawn a turret at each of points of the turretCircle
+                                turrets.add(new Turret(turretCircle.getPoints()[i].x, turretCircle.getPoints()[i].y, turretCircles.indexOf(turretCircle)));
+                            }
+                        }
+
+                        //If a new highScore was achieved, reset the high score
+                        if (myUFO.getScore() > highScore) {
+                            highScore = myUFO.getScore();
+                        }
+
+                        //Fully repair the UFO
+                        myUFO.revive();
+
+                        //Set game over to false
+                        gameOver = false;
+
+                    }
+                }
+            } 
+
+            //If the game is paused...
+            else {
+
+                //Calculate the distance from the mouse to the UFO
+                int distance = (int) Math.sqrt(Math.pow(myUFO.getXPos() - mouseX, 2) + Math.pow(myUFO.getYPos() - mouseY, 2));
+
+                //If the mouse returned to the JPanel and placed back into the UFO's bodys
+                if (!outsideBounds && distance < myUFO.getUFOImage().getWidth() / 2) {
+                    //Unpause the game
+                    paused = false;
+
+                    //Made the cursor the UFO again
+                    setCursor(myCursor);
+
+                    //Resume all of the game's timers
+                    alienSpawnTimer.setPaused(false);
+                    turretUpgradeTimer.setPaused(false);
+                    gameOverTimer.setPaused(false);
+                }
+            }
+
+            //Redraw the game panel
+            repaint();
+
+            //Runs loop at 60fps
+            Thread.sleep(17);
+        }
+    }
+
+//Action Listeners:
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+        //If the game is in its title screen...
+        if (menuScreen) {
+            
+            //Reset the turret updgrade time
+            turretUpgradeTime = Const.TURRET_UPDGRADE_TIME;
+            
+            //Begin all game timers
+            turretUpgradeTimer.reset(turretUpgradeTime);
+            alienSpawnTimer.reset(Const.ALIEN_SPAWN_FREQ);
+            menuScreen = false;
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+        //The mouse has re-entered the JPanel
+        outsideBounds = false;
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+        //The mouse has left the JPanel
+        outsideBounds = true;
+
+        //Pause the game if the mouse is outside the bounds (unless it is already paused)
+        if (!paused) {
+            //Don't pause the game if it is in the gameover animation
+            if (!gameOver && !menuScreen) {
+
+                //Set the game to paused
+                paused = true;
+
+                //Set the mouse cursor to the default move cursor again
+                setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+
+                //Pause all of the game's timers
+                alienSpawnTimer.setPaused(true);
+                turretUpgradeTimer.setPaused(true);
+                gameOverTimer.setPaused(true);
+            }
+        }
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        //Update the mouse position
+        mouseX = e.getX();
+        mouseY = e.getY();
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        //Update the mouse position
+        mouseX = e.getX();
+        mouseY = e.getY();
+    }
+}
